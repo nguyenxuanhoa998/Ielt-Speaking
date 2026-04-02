@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, UploadFile, File, HTTPException
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from auth import router as auth_router
 from sqlalchemy.orm import Session
@@ -29,8 +30,14 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 
-# Load the local Whisper model (we use 'base' for a good balance of speed and accuracy during development)
-whisper_model = whisper.load_model("base")
+from submissions import router as submissions_router
+app.include_router(submissions_router, prefix="/api/v1", tags=["submissions"])
+
+import os
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+from ml_models import whisper_model
 
 @app.get("/")
 def root():
