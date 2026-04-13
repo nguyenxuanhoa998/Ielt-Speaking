@@ -128,7 +128,10 @@ async function handleLogin() {
     if (res.ok && data.access_token) {
       localStorage.setItem('token',      data.access_token);
       localStorage.setItem('token_type', data.token_type || 'bearer');
-      window.location.href = '/dashboard.html';
+      // Role-based redirect
+      if (role === 'admin')   window.location.href = '/admin-dashboard.html';
+      else if (role === 'teacher') window.location.href = '/teacher-dashboard.html';
+      else window.location.href = '/dashboard.html';
     } else {
       _showAlert('login-alert', 'login-alert-msg', data.detail || 'Invalid email or password.');
     }

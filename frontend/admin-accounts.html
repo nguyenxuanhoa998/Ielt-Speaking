@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accounts — IELTS Speaking AI Admin</title>
+  <meta name="description" content="Full accounts overview with search, filter, and management tools.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/admin.css">
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar">
+  <div class="nav-left">
+    <div class="nav-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a5 5 0 015 5v2H7V7a5 5 0 015-5z"/>
+        <rect x="3" y="9" width="18" height="13" rx="2"/>
+        <circle cx="12" cy="15.5" r="1.5" fill="white" stroke="none"/>
+      </svg>
+    </div>
+    <span class="nav-brand">IELTS Speaking AI</span>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="/admin-dashboard.html">Dashboard</a>
+    <a class="nav-link active" href="/admin-accounts.html">Accounts</a>
+    <a class="nav-link" href="/admin-users.html">
+      User management
+      <span class="nav-badge hidden" id="nav-pending-badge">0</span>
+    </a>
+    <a class="nav-link" href="/admin-analytics.html">Analytics</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-role-badge">Admin</span>
+    <div class="nav-avatar" id="nav-avatar">AD</div>
+    <span class="nav-name" id="nav-name">Admin</span>
+    <button class="nav-logout" onclick="Auth.logout()" title="Logout">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ── PAGE ── -->
+<div class="page">
+  <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <h1 class="page-title">Accounts management</h1>
+      <p class="page-sub">All registered platform accounts</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div class="search-wrap">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="search-input" placeholder="Search accounts..." oninput="handleSearch(this.value)">
+      </div>
+      <!-- Filter by role -->
+      <select id="role-filter" onchange="handleFilter()" style="padding:7px 10px;border:1px solid var(--gray-border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;cursor:pointer;background:#fff;color:var(--text-1);">
+        <option value="">All roles</option>
+        <option value="student">Students</option>
+        <option value="teacher">Teachers</option>
+        <option value="admin">Admins</option>
+      </select>
+      <!-- Filter by status -->
+      <select id="status-filter" onchange="handleFilter()" style="padding:7px 10px;border:1px solid var(--gray-border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;cursor:pointer;background:#fff;color:var(--text-1);">
+        <option value="">All statuses</option>
+        <option value="approved">Approved</option>
+        <option value="pending">Pending</option>
+      </select>
+      <button class="btn btn-outline btn-sm" onclick="exportAccounts()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Export
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary bar -->
+  <div style="display:flex;gap:16px;margin-bottom:20px;">
+    <div style="background:#fff;border:1px solid var(--gray-border);border-radius:10px;padding:14px 20px;display:flex;align-items:center;gap:12px;flex:1;">
+      <div style="font-size:22px;font-weight:700;color:var(--navy);" id="ac-total">—</div>
+      <div style="font-size:13px;color:var(--text-3);">Total accounts</div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--gray-border);border-radius:10px;padding:14px 20px;display:flex;align-items:center;gap:12px;flex:1;">
+      <div style="font-size:22px;font-weight:700;color:#22C55E;" id="ac-approved">—</div>
+      <div style="font-size:13px;color:var(--text-3);">Approved</div>
+    </div>
+    <div style="background:var(--warning-bg);border:1px solid #F6C90E;border-radius:10px;padding:14px 20px;display:flex;align-items:center;gap:12px;flex:1;">
+      <div style="font-size:22px;font-weight:700;color:var(--warning);" id="ac-pending">—</div>
+      <div style="font-size:13px;color:var(--warning);">Pending approval</div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--gray-border);border-radius:10px;padding:14px 20px;display:flex;align-items:center;gap:12px;flex:1;">
+      <div style="font-size:22px;font-weight:700;color:#3B82F6;" id="ac-students">—</div>
+      <div style="font-size:13px;color:var(--text-3);">Students</div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--gray-border);border-radius:10px;padding:14px 20px;display:flex;align-items:center;gap:12px;flex:1;">
+      <div style="font-size:22px;font-weight:700;color:#8B5CF6;" id="ac-teachers">—</div>
+      <div style="font-size:13px;color:var(--text-3);">Teachers</div>
+    </div>
+  </div>
+
+  <!-- Pending alert -->
+  <div class="alert-banner hidden" id="pending-banner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <span id="pending-banner-text">accounts need review.</span>
+    <a href="/admin-users.html">Review now →</a>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <table class="data-table" id="accounts-table">
+      <thead>
+        <tr>
+          <th>USER</th>
+          <th>ROLE</th>
+          <th>STATUS</th>
+          <th>SUBMISSIONS</th>
+          <th>REGISTERED</th>
+          <th>ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody id="accounts-tbody">
+        <tr><td colspan="6" class="empty-state">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script src="static/js/auth.js"></script>
+<script src="static/js/admin-accounts.js"></script>
+</body>
+</html>

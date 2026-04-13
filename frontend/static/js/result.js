@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const submissionId = urlParams.get('id');
 
     if (!submissionId) {
-        alert("No submission ID provided.");
-        window.location.href = '/dashboard.html';
+        // No ID — go back to the full list
+        window.location.href = '/results.html';
         return;
     }
 

@@ -120,6 +120,7 @@ function selectPart(part) {
 
 /* ── Questions ─────────────────────────────────────────────────── */
 function loadNewQuestion() {
+  if (isRecording) return;
   const data = PARTS[currentPart];
   const q    = data.questions[Math.floor(Math.random() * data.questions.length)];
   currentQuestion = q;
@@ -155,11 +156,11 @@ function _setRecordState(state) {
 
   // Update stepper
   if (state === 'done') {
-    document.getElementById('step-3').classList.add('done');
-    document.getElementById('step-3').classList.remove('active');
-    document.getElementById('step-4').classList.add('active');
-    document.getElementById('line-2').classList.add('done');
-    document.getElementById('line-3').classList.add('done');
+    // Stage 3 is still active until officially submitted, matching screenshot Pic 4
+    document.getElementById('step-3').classList.add('active');
+    document.getElementById('step-3').classList.remove('done');
+    document.getElementById('step-4').classList.remove('active', 'done');
+    document.getElementById('line-3').classList.remove('done');
   } else if (state === 'submitted') {
     document.getElementById('step-4').classList.add('done');
     document.getElementById('step-4').classList.remove('active');
@@ -198,6 +199,10 @@ function _updateChecklist(hasAudio) {
 
 /* ── Start recording ───────────────────────────────────────────── */
 async function startRecording() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    alert('Your browser blocked microphone access on this address. Please try using "http://localhost:8000" instead of "127.0.0.1".');
+    return;
+  }
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     audioChunks  = [];
@@ -208,9 +213,9 @@ async function startRecording() {
     };
 
     mediaRecorder.onstop = () => {
+      isRecording = false; // still locked until submit or reset
       audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
       stream.getTracks().forEach(t => t.stop());
-      isRecording = false;
       _setRecordState('done');
       _updateChecklist(true);
     };
@@ -218,13 +223,25 @@ async function startRecording() {
     mediaRecorder.start();
     isRecording = true;
 
+    // Lock UI
+    document.querySelector('.part-grid').classList.add('disabled-zone');
+    document.getElementById('btn-new-q').classList.add('disabled-zone');
+
     // Pulse animation on stop button
     document.querySelector('.mic-btn-stop').classList.add('pulsing');
 
     _setRecordState('recording');
   } catch (err) {
-    alert('Microphone access denied. Please allow microphone access and try again.');
-    console.error(err);
+    let msg = 'Microphone error: ' + err.message;
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      msg = 'Microphone access denied. Please allow microphone access in your browser settings (look for the lock icon in the address bar).';
+    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+      msg = 'No microphone detected. Please plug in a microphone and try again.';
+    } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+      msg = 'Microphone is already being used by another application (like Google Meet or Zoom). Please close them and try again.';
+    }
+    alert(msg);
+    console.error('Record Error:', err);
   }
 }
 
@@ -233,6 +250,17 @@ function stopRecording() {
   if (mediaRecorder && mediaRecorder.state !== 'inactive') {
     mediaRecorder.stop();
   }
+}
+
+function resetRecording() {
+  audioBlob = null;
+  audioChunks = [];
+  _setRecordState('idle');
+  _updateChecklist(false);
+  
+  // Unlock UI if it was locked
+  document.querySelector('.part-grid').classList.remove('disabled-zone');
+  document.getElementById('btn-new-q').classList.remove('disabled-zone');
 }
 
 /* ── File upload ───────────────────────────────────────────────── */
@@ -279,7 +307,19 @@ async function submitEvaluation() {
     });
 
     if (res.ok) {
+      const data = await res.json();
       _setRecordState('submitted');
+      
+      // Update UI to allow clicking again (if they want to submit another later)
+      document.querySelector('.part-grid').classList.remove('disabled-zone');
+      document.getElementById('btn-new-q').classList.remove('disabled-zone');
+
+      // 1. Show alert
+      alert('Submitted successfully! Your recording is being processed by our AI. Redirecting to dashboard...');
+      
+      // 2. Redirect to dashboard
+      window.location.href = '/dashboard.html';
+
       loadRecentSubmissions(); // refresh list
     } else {
       const data = await res.json().catch(() => ({}));
@@ -339,17 +379,17 @@ async function loadRecentSubmissions() {
     const recent = data.slice(0, 4);
     listEl.innerHTML = recent.map(sub => {
       const dateStr = new Date(sub.submitted_at).toLocaleDateString('en-GB');
-      let statusBadge = '';
-      let scoreBadge = '';
       
       const isEvaluated = ['ai_evaluated', 'reviewed'].includes(sub.status) || sub.score !== null;
+      let statusHtml = '';
       
       if (isEvaluated) {
         const score = sub.score !== null ? sub.score : '-';
-        scoreBadge = `<span class="recent-score">${score}</span>`;
-        statusBadge = `<span class="badge badge-reviewed">Reviewed</span>`;
-      } else {
-        statusBadge = `<span class="badge badge-pending">Pending</span>`;
+        statusHtml = `<span class="badge badge-score">${score}</span>`;
+      } else if (sub.status === 'pending' || sub.status === 'transcribed') {
+        statusHtml = `<span class="badge badge-pending">Pending</span>`;
+      } else if (sub.status === 'failed') {
+        statusHtml = `<span class="badge" style="background:#fee2e2; color:#b91c1c;">Failed</span>`;
       }
       
       let partDisplay = sub.part;
@@ -358,13 +398,15 @@ async function loadRecentSubmissions() {
       else if (sub.part === 'part3') partDisplay = 'Part 3';
       
       return `
-        <div class="recent-item" style="cursor:pointer;" onclick="window.location.href='/result.html?id=${sub.id}'" title="View details">
-            <div class="recent-meta">
-                <span class="recent-id">#${sub.id}</span>
-                <span class="recent-part">${partDisplay || 'Part ?'}</span>
+        <div class="recent-item" style="cursor:pointer;" onclick="window.location.href='/result.html?id=${sub.id}'">
+            <div class="recent-info">
+                <div class="recent-id-part">
+                    <span>#${sub.id}</span>
+                    <span>${partDisplay || 'Part ?'}</span>
+                </div>
                 <div class="recent-date">${dateStr}</div>
             </div>
-            ${scoreBadge ? `<div class="recent-score-wrap">${scoreBadge}${statusBadge}</div>` : statusBadge}
+            ${statusHtml}
         </div>
       `;
     }).join('');

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Review Queue — IELTS Speaking AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="static/css/teacher.css">
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar">
+  <div class="nav-left">
+    <div class="nav-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a5 5 0 015 5v2H7V7a5 5 0 015-5z"/>
+        <rect x="3" y="9" width="18" height="13" rx="2"/>
+        <circle cx="12" cy="15.5" r="1.5" fill="white" stroke="none"/>
+      </svg>
+    </div>
+    <span class="nav-brand">IELTS Speaking AI</span>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="/teacher-dashboard.html">Dashboard</a>
+    <a class="nav-link" href="/teacher-submissions.html">Submissions</a>
+    <a class="nav-link active" href="/teacher-review.html">Review queue <span class="nav-badge" id="nav-pending-count"></span></a>
+    <a class="nav-link" href="/teacher-students.html">My students</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-role-badge">Teacher</span>
+    <div class="nav-avatar" id="nav-avatar">TK</div>
+    <span class="nav-name" id="nav-name">Teacher</span>
+    <button class="nav-logout" onclick="Auth.logout()" title="Logout">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<div class="page" style="max-width:100%;padding:16px 24px 24px;">
+  <div style="margin-bottom:16px;">
+    <h1 class="page-title">Review queue</h1>
+  </div>
+
+  <!-- Split layout -->
+  <div class="review-layout">
+
+    <!-- LEFT: Queue sidebar -->
+    <div class="review-sidebar">
+      <div class="review-sidebar-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="color:var(--text-3);">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span style="font-size:14px;font-weight:600;color:var(--text-1);">Submissions</span>
+      </div>
+
+      <div class="review-filter-tabs">
+        <button class="filter-tab active" onclick="filterReviewQueue('pending', this)">Pending</button>
+        <button class="filter-tab" onclick="filterReviewQueue('all', this)">All</button>
+        <button class="filter-tab" onclick="filterReviewQueue('done', this)">Done</button>
+      </div>
+
+      <div class="review-queue-list" id="review-queue-list">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Review main panel -->
+    <div class="review-main" id="review-main">
+
+      <!-- Empty state when nothing selected -->
+      <div id="review-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--text-3);padding:40px;text-align:center;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48" style="color:var(--gray-border);margin-bottom:16px;">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <p style="font-size:15px;font-weight:500;margin-bottom:6px;">Select a submission to review</p>
+        <p style="font-size:13px;">Choose from the queue on the left to start evaluating.</p>
+      </div>
+
+      <!-- Review content (hidden until submission selected) -->
+      <div id="review-content" style="display:none;">
+
+        <!-- Sticky header -->
+        <div class="review-main-header">
+          <div>
+            <div style="font-size:16px;font-weight:600;color:var(--text-1);" id="review-header-name">Student Name — #ID</div>
+            <div style="font-size:12px;color:var(--text-3);margin-top:2px;" id="review-header-meta">Part X · Submitted on ...</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-outline btn-sm" onclick="skipToNext()">Skip</button>
+            <button class="btn btn-primary btn-sm" id="submit-review-btn" onclick="submitReview()">Submit review</button>
+          </div>
+        </div>
+
+        <div class="review-main-body">
+
+          <!-- Section: Student Recording -->
+          <div style="margin-bottom:24px;">
+            <div class="review-section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/>
+              </svg>
+              Student recording
+            </div>
+
+            <div class="audio-wrap">
+              <audio id="review-audio" controls style="flex:1;height:36px;">
+                Your browser does not support audio.
+              </audio>
+              <span class="audio-meta" id="review-audio-meta">Loading...</span>
+            </div>
+          </div>
+
+          <!-- Section: Transcript -->
+          <div style="margin-bottom:24px;">
+            <div class="review-section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <line x1="21" y1="10" x2="3" y2="10"/>
+                <line x1="21" y1="6" x2="3" y2="6"/>
+                <line x1="21" y1="14" x2="3" y2="14"/>
+                <line x1="21" y1="18" x2="9" y2="18"/>
+              </svg>
+              Whisper transcript
+            </div>
+
+            <div class="transcript-box" id="review-transcript">Loading transcript...</div>
+            <button class="show-more-btn" id="show-more-btn" onclick="toggleTranscript()">Show full transcript ↓</button>
+          </div>
+
+          <!-- Section: AI Evaluation (read-only) -->
+          <div style="margin-bottom:24px;">
+            <div class="review-section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+              </svg>
+              AI evaluation scores <span style="font-size:11px;font-weight:400;color:var(--text-4);">(read-only)</span>
+            </div>
+
+            <div class="ai-scores-grid">
+              <div class="ai-score-box">
+                <div class="ai-score-label">Fluency & Coherence</div>
+                <div class="ai-score-val" id="ai-fluency">—</div>
+              </div>
+              <div class="ai-score-box">
+                <div class="ai-score-label">Lexical Resource</div>
+                <div class="ai-score-val" id="ai-lexical">—</div>
+              </div>
+              <div class="ai-score-box">
+                <div class="ai-score-label">Grammar Range</div>
+                <div class="ai-score-val" id="ai-grammar">—</div>
+              </div>
+              <div class="ai-score-box" style="background:var(--navy-light);">
+                <div class="ai-score-label">AI Overall</div>
+                <div class="ai-score-val" id="ai-overall">—</div>
+              </div>
+            </div>
+
+            <div class="ai-feedback-row">
+              <div class="feedback-box strengths">
+                <div class="feedback-box-label">AI Strengths</div>
+                <div id="ai-strengths">—</div>
+              </div>
+              <div class="feedback-box improvements">
+                <div class="feedback-box-label">AI Improvements</div>
+                <div id="ai-improvements">—</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Section: Manual Scoring -->
+          <div style="margin-bottom:24px;">
+            <div class="review-section-title" style="margin-bottom:16px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Manual scoring
+            </div>
+
+            <div class="scoring-grid">
+              <div class="score-field">
+                <label>Pronunciation Score <span style="color:var(--text-4);font-weight:400;">(0–9, required)</span></label>
+                <select class="score-input" id="score-pronunciation" onchange="recalcOverall()">
+                  <option value="">Select...</option>
+                  <option>4.0</option><option>4.5</option>
+                  <option>5.0</option><option>5.5</option>
+                  <option>6.0</option><option>6.5</option>
+                  <option>7.0</option><option>7.5</option>
+                  <option>8.0</option><option>8.5</option>
+                  <option>9.0</option>
+                </select>
+              </div>
+              <div class="score-field">
+                <label>Adjusted Fluency <span style="color:var(--text-4);font-weight:400;">(optional override)</span></label>
+                <select class="score-input" id="score-fluency" onchange="recalcOverall()">
+                  <option value="">Use AI score</option>
+                  <option>4.0</option><option>4.5</option>
+                  <option>5.0</option><option>5.5</option>
+                  <option>6.0</option><option>6.5</option>
+                  <option>7.0</option><option>7.5</option>
+                  <option>8.0</option><option>8.5</option>
+                  <option>9.0</option>
+                </select>
+              </div>
+              <div class="score-field">
+                <label>Adjusted Lexical <span style="color:var(--text-4);font-weight:400;">(optional override)</span></label>
+                <select class="score-input" id="score-lexical" onchange="recalcOverall()">
+                  <option value="">Use AI score</option>
+                  <option>4.0</option><option>4.5</option>
+                  <option>5.0</option><option>5.5</option>
+                  <option>6.0</option><option>6.5</option>
+                  <option>7.0</option><option>7.5</option>
+                  <option>8.0</option><option>8.5</option>
+                  <option>9.0</option>
+                </select>
+              </div>
+              <div class="score-field">
+                <label>Adjusted Grammar <span style="color:var(--text-4);font-weight:400;">(optional override)</span></label>
+                <select class="score-input" id="score-grammar" onchange="recalcOverall()">
+                  <option value="">Use AI score</option>
+                  <option>4.0</option><option>4.5</option>
+                  <option>5.0</option><option>5.5</option>
+                  <option>6.0</option><option>6.5</option>
+                  <option>7.0</option><option>7.5</option>
+                  <option>8.0</option><option>8.5</option>
+                  <option>9.0</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Final overall score preview -->
+            <div style="background:var(--navy-light);border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-size:13px;font-weight:600;color:var(--navy);">Final Overall Band Score</span>
+              <span style="font-size:22px;font-weight:700;color:var(--navy);" id="final-overall">—</span>
+            </div>
+          </div>
+
+          <!-- Section: Written Review -->
+          <div style="margin-bottom:24px;">
+            <div class="review-section-title" style="margin-bottom:12px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+              Written review
+            </div>
+
+            <textarea
+              class="feedback-textarea"
+              id="teacher-feedback"
+              placeholder="Write your feedback for the student (min. 20 characters). Be specific about strengths and areas for improvement..."
+              oninput="updateCharCount()"
+              rows="5"
+            ></textarea>
+            <div class="char-count"><span id="char-count">0</span> / 2000 characters</div>
+            <div style="font-size:11px;color:var(--danger);margin-top:4px;display:none;" id="feedback-error">Review must be at least 20 characters.</div>
+          </div>
+
+        </div><!-- end review-main-body -->
+      </div><!-- end review-content -->
+    </div><!-- end review-main -->
+  </div><!-- end review-layout -->
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script src="static/js/auth.js"></script>
+<script src="static/js/teacher-review.js"></script>
+</body>
+</html>

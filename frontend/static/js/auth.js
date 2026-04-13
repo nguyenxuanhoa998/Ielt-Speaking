@@ -19,7 +19,7 @@
 
 const Auth = (() => {
 
-  const API_BASE = 'http://localhost:8000/api';
+  const API_BASE = '/api';
 
   /* ── Token helpers ─────────────────────────────────────────── */
   function getToken() {
