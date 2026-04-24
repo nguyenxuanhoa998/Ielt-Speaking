@@ -1,0 +1,19 @@
+/* Student sidebar: dot bullets on nav-items */
+.nav-item::before {
+  content: '•';
+  margin-right: 12px;
+  font-size: 16px;
+  color: var(--text-4);
+  line-height: 1;
+}
+
+.nav-item.active::before { color: var(--navy); }
+
+.tips-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+/* page max-width override for student pages */
+.page { max-width: 1180px; }

@@ -1,13 +1,12 @@
 import os
-import sys
 from dotenv import load_dotenv
 
-# Add the parent directory to sys.path so we can import modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+load_dotenv()
 
-from database import SessionLocal, engine
-from models import Base, User
-from auth import get_password_hash
+from src.utils.database import SessionLocal, engine, Base
+import src.models.db_models  # registers all models with Base
+from src.models.db_models import User
+from src.services.auth_service import get_password_hash
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -93,5 +92,4 @@ def seed_users():
     print("Database seeding completed.")
 
 if __name__ == "__main__":
-    load_dotenv()
     seed_users()

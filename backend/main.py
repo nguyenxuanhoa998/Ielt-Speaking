@@ -1,19 +1,19 @@
 from dotenv import load_dotenv
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy.orm import Session
-
-import models
-from auth import router as auth_router
-from database import engine
-from database import get_db
 
 load_dotenv()
 
-# Create database tables if they don't exist
-models.Base.metadata.create_all(bind=engine)
+from src.utils.database import engine
+import src.models.db_models  # registers all models with Base
+from src.utils.database import Base
+from src.routes.auth import router as auth_router
+from src.routes.submissions import router as submissions_router
+from src.routes.admin import router as admin_router
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -26,10 +26,6 @@ app.add_middleware(
 )
 
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
-
-from submissions import router as submissions_router
-from admin import router as admin_router
-
 app.include_router(submissions_router, prefix="/api/v1", tags=["submissions"])
 app.include_router(admin_router, prefix="/api/v1/admin", tags=["admin"])
 
@@ -37,23 +33,41 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 FRONTEND_DIR = os.path.join(BASE_DIR, "../frontend")
+SRC_DIR = os.path.join(FRONTEND_DIR, "src")
 UPLOADS_DIR = os.path.join(BASE_DIR, "uploads")
 
 os.makedirs(UPLOADS_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
-app.mount("/static", StaticFiles(directory=os.path.join(FRONTEND_DIR, "static")), name="static")
+app.mount("/src", StaticFiles(directory=SRC_DIR), name="src")
+
+# Map URL route name → file path inside src/
+PAGE_MAP = {
+    "login":               "pages/auth/login.html",
+    "dashboard":           "pages/student/dashboard.html",
+    "submission":          "pages/student/submission.html",
+    "result":              "pages/student/result.html",
+    "results":             "pages/student/results.html",
+    "teacher-dashboard":   "pages/teacher/dashboard.html",
+    "teacher-review":      "pages/teacher/review.html",
+    "teacher-students":    "pages/teacher/students.html",
+    "teacher-submissions": "pages/teacher/submissions.html",
+    "admin-dashboard":     "pages/admin/dashboard.html",
+    "admin-analytics":     "pages/admin/analytics.html",
+    "admin-users":         "pages/admin/users.html",
+    "admin-accounts":      "pages/admin/accounts.html",
+}
 
 
 @app.get("/")
 def root():
-    return FileResponse(os.path.join(FRONTEND_DIR, "login.html"))
+    return FileResponse(os.path.join(SRC_DIR, "pages/auth/login.html"))
 
 
 @app.get("/{page_name}.html")
 def get_html_page(page_name: str):
-    file_path = os.path.join(FRONTEND_DIR, f"{page_name}.html")
-    if os.path.exists(file_path):
-        return FileResponse(file_path)
+    rel = PAGE_MAP.get(page_name)
+    if rel:
+        return FileResponse(os.path.join(SRC_DIR, rel))
     return {"error": f"Không tìm thấy trang {page_name}.html"}
 
 

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics — IELTS Speaking AI Admin</title>
+  <meta name="description" content="Platform analytics — submission trends, score distributions, and performance metrics.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/shared/styles/base.css">
+  <link rel="stylesheet" href="/src/shared/styles/admin.css">
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar">
+  <div class="nav-left">
+    <div class="nav-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a5 5 0 015 5v2H7V7a5 5 0 015-5z"/>
+        <rect x="3" y="9" width="18" height="13" rx="2"/>
+        <circle cx="12" cy="15.5" r="1.5" fill="white" stroke="none"/>
+      </svg>
+    </div>
+    <span class="nav-brand">IELTS Speaking AI</span>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link" href="/admin-dashboard.html">Dashboard</a>
+    <a class="nav-link" href="/admin-accounts.html">Accounts</a>
+    <a class="nav-link" href="/admin-users.html">
+      User management
+      <span class="nav-badge hidden" id="nav-pending-badge">0</span>
+    </a>
+    <a class="nav-link active" href="/admin-analytics.html">Analytics</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-role-badge">Admin</span>
+    <div class="nav-avatar" id="nav-avatar">AD</div>
+    <span class="nav-name" id="nav-name">Admin</span>
+    <button class="nav-logout" onclick="Auth.logout()" title="Logout">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ── PAGE ── -->
+<div class="page">
+  <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+    <div>
+      <h1 class="page-title">Analytics</h1>
+      <p class="page-sub">Platform-wide performance metrics</p>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-outline btn-sm period-btn active" id="period-7" onclick="setPeriod(7, this)">7 days</button>
+      <button class="btn btn-outline btn-sm period-btn" id="period-30" onclick="setPeriod(30, this)">30 days</button>
+      <button class="btn btn-outline btn-sm period-btn" id="period-90" onclick="setPeriod(90, this)">90 days</button>
+    </div>
+  </div>
+
+  <!-- Top Stats -->
+  <div class="summary-grid" style="margin-bottom:28px;">
+    <div class="summary-card">
+      <div class="summary-icon-wrap bg-blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+        </svg>
+      </div>
+      <div class="summary-value" id="a-total-users">-</div>
+      <div class="summary-label">Total users</div>
+      <div class="summary-sub success" id="a-users-trend"></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon-wrap bg-green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+      </div>
+      <div class="summary-value" id="a-submissions">-</div>
+      <div class="summary-label">Submissions (period)</div>
+      <div class="summary-sub success" id="a-submissions-trend"></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon-wrap bg-purple">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      </div>
+      <div class="summary-value" id="a-avg-band">-</div>
+      <div class="summary-label">Avg band score</div>
+      <div class="summary-sub success" id="a-band-trend"></div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-icon-wrap bg-yellow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+          <polyline points="22 4 12 14.01 9 11"/>
+        </svg>
+      </div>
+      <div class="summary-value" id="a-completion">-</div>
+      <div class="summary-label">Review completion</div>
+    </div>
+  </div>
+
+  <!-- Charts Grid -->
+  <div class="analytics-grid">
+    <!-- Submissions over time -->
+    <div class="card-padded" style="grid-column:1/-1;">
+      <div class="section-header">
+        <div class="section-title">Submissions over time</div>
+      </div>
+      <div class="chart-container" id="submissions-chart">
+        <div class="chart-bars" id="chart-bars-submissions"></div>
+        <div class="chart-labels" id="chart-labels-submissions"></div>
+      </div>
+    </div>
+
+    <!-- Score Distribution -->
+    <div class="card-padded">
+      <div class="section-header">
+        <div class="section-title">Score distribution — Students</div>
+      </div>
+      <div class="score-dist" id="score-dist"></div>
+    </div>
+
+    <!-- Top performers -->
+    <div class="card-padded">
+      <div class="section-header">
+        <div class="section-title">Top performers</div>
+      </div>
+      <div id="top-performers">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+
+    <!-- AI vs Teacher -->
+    <div class="card-padded" style="grid-column:1/-1;">
+      <div class="section-header">
+        <div class="section-title">AI vs Teacher evaluation agreement</div>
+      </div>
+      <div class="agree-stats" id="agree-stats">
+        <div class="agree-stat">
+          <div class="agree-label">AI only (pending review)</div>
+          <div class="agree-bar-wrap"><div class="agree-bar" id="bar-ai" style="background:#3B82F6;width:0%;"></div></div>
+          <div class="agree-val" id="val-ai">—</div>
+        </div>
+        <div class="agree-stat">
+          <div class="agree-label">Teacher reviewed</div>
+          <div class="agree-bar-wrap"><div class="agree-bar" id="bar-reviewed" style="background:#22C55E;width:0%;"></div></div>
+          <div class="agree-val" id="val-reviewed">—</div>
+        </div>
+        <div class="agree-stat">
+          <div class="agree-label">Pending processing</div>
+          <div class="agree-bar-wrap"><div class="agree-bar" id="bar-pending" style="background:#F59E0B;width:0%;"></div></div>
+          <div class="agree-val" id="val-pending">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script src="/src/shared/utils/auth.js"></script>
+<script src="/src/shared/utils/helpers.js"></script>
+<script src="/src/pages/admin/analytics.js"></script>
+</body>
+</html>

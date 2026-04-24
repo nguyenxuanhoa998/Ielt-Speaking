@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — IELTS Speaking AI</title>
+  <meta name="description" content="IELTS Speaking AI Admin Dashboard — System overview, user breakdown, and activity logs.">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/shared/styles/base.css">
+  <link rel="stylesheet" href="/src/shared/styles/admin.css">
+</head>
+<body>
+
+<!-- ── NAVBAR ── -->
+<nav class="navbar">
+  <div class="nav-left">
+    <div class="nav-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a5 5 0 015 5v2H7V7a5 5 0 015-5z"/>
+        <rect x="3" y="9" width="18" height="13" rx="2"/>
+        <circle cx="12" cy="15.5" r="1.5" fill="white" stroke="none"/>
+      </svg>
+    </div>
+    <span class="nav-brand">IELTS Speaking AI</span>
+  </div>
+  <div class="nav-links">
+    <a class="nav-link active" href="/admin-dashboard.html" id="nav-dashboard">Dashboard</a>
+    <a class="nav-link" href="/admin-accounts.html" id="nav-accounts">Accounts</a>
+    <a class="nav-link" href="/admin-users.html" id="nav-users">
+      User management
+      <span class="nav-badge hidden" id="nav-pending-badge">0</span>
+    </a>
+    <a class="nav-link" href="/admin-analytics.html" id="nav-analytics">Analytics</a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-role-badge">Admin</span>
+    <div class="nav-avatar" id="nav-avatar">AD</div>
+    <span class="nav-name" id="nav-name">Admin</span>
+    <button class="nav-logout" onclick="Auth.logout()" title="Logout">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<!-- ── PAGE ── -->
+<div class="page">
+  <div class="page-header">
+    <h1 class="page-title">System Dashboard</h1>
+  </div>
+
+  <!-- Pending approval banner -->
+  <div class="alert-banner hidden" id="pending-banner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/>
+      <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <span id="pending-banner-text">accounts pending approval.</span>
+    <a href="/admin-users.html">Review now →</a>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-icon-wrap bg-blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+          <path d="M16 3.13a4 4 0 010 7.75"/>
+        </svg>
+      </div>
+      <div class="summary-value" id="val-total-users">-</div>
+      <div class="summary-label">Total users</div>
+      <div class="summary-sub success" id="val-users-week"></div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon-wrap bg-green">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <polyline points="10 9 9 9 8 9"/>
+        </svg>
+      </div>
+      <div class="summary-value" id="val-total-submissions">-</div>
+      <div class="summary-label">Total submissions</div>
+      <div class="summary-sub success" id="val-submissions-month"></div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon-wrap bg-yellow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+      <div class="summary-value" id="val-pending-reviews">-</div>
+      <div class="summary-label">Pending reviews</div>
+    </div>
+
+    <div class="summary-card">
+      <div class="summary-icon-wrap bg-purple">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+      </div>
+      <div class="summary-value" id="val-avg-band">-</div>
+      <div class="summary-label">Platform avg band</div>
+      <div class="summary-sub success" id="val-band-trend"></div>
+    </div>
+  </div>
+
+  <!-- Dashboard Layout -->
+  <div class="dashboard-layout">
+    <!-- MAIN -->
+    <main>
+      <!-- User Breakdown -->
+      <div class="section-header">
+        <div class="section-title">User breakdown</div>
+        <a href="/admin-users.html" class="btn btn-outline btn-sm">Manage users</a>
+      </div>
+
+      <div class="breakdown-grid" style="margin-bottom:28px;">
+        <div class="summary-card breakdown-card">
+          <div class="breakdown-icon-wrap" style="background:#EFF6FF;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="summary-value" id="val-students">-</div>
+          <div class="summary-label">Students</div>
+          <div class="summary-sub success" id="val-students-week"></div>
+        </div>
+        <div class="summary-card breakdown-card">
+          <div class="breakdown-icon-wrap" style="background:#F0FDF4;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+              <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+            </svg>
+          </div>
+          <div class="summary-value" id="val-teachers">-</div>
+          <div class="summary-label">Teachers</div>
+          <div class="summary-sub danger" id="val-teachers-pending"></div>
+        </div>
+        <div class="summary-card breakdown-card">
+          <div class="breakdown-icon-wrap" style="background:#FFF7ED;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+            </svg>
+          </div>
+          <div class="summary-value" id="val-admins">-</div>
+          <div class="summary-label">Admins</div>
+          <div class="summary-sub danger" id="val-admins-pending"></div>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="section-header">
+        <div class="section-title">Recent activity</div>
+        <button class="btn btn-outline btn-sm" onclick="loadActivity()">View all logs</button>
+      </div>
+
+      <div class="card" id="activity-card">
+        <div class="activity-list" id="activity-list">
+          <div class="empty-state">Loading activity...</div>
+        </div>
+      </div>
+    </main>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-label">ADMIN NAVIGATION</div>
+        <nav class="nav-menu">
+          <a href="/admin-dashboard.html" class="nav-item active">Dashboard</a>
+          <a href="/admin-users.html" class="nav-item">
+            User management
+            <span class="nav-item-count hidden" id="sidebar-pending-count">0</span>
+          </a>
+          <a href="/admin-analytics.html" class="nav-item">Analytics</a>
+        </nav>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-label">SYSTEM HEALTH</div>
+        <div class="health-items">
+          <div class="health-item">
+            <div class="health-label">AI evaluation uptime</div>
+            <div class="health-bar-wrap">
+              <div class="health-bar" style="width:99.8%;background:#22C55E;"></div>
+            </div>
+            <div class="health-val" style="color:#22C55E;">99.8%</div>
+          </div>
+          <div class="health-item">
+            <div class="health-label">Storage used</div>
+            <div class="health-bar-wrap">
+              <div class="health-bar" id="storage-bar" style="width:0%;background:#F59E0B;"></div>
+            </div>
+            <div class="health-val" id="storage-val" style="color:#F59E0B;">—</div>
+          </div>
+          <div class="health-item">
+            <div class="health-label">API quota used</div>
+            <div class="health-bar-wrap">
+              <div class="health-bar" id="api-bar" style="width:0%;background:#3B82F6;"></div>
+            </div>
+            <div class="health-val" id="api-val" style="color:#3B82F6;">—</div>
+          </div>
+        </div>
+        <div class="health-updated" id="health-updated">Last updated: —</div>
+      </div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-label">QUICK ACTIONS</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <a href="/admin-users.html" class="btn btn-primary" id="review-pending-btn">
+            Review pending accounts (<span id="qa-pending-count">0</span>)
+          </a>
+          <a href="/admin-analytics.html" class="btn btn-outline">View analytics</a>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script src="/src/shared/utils/auth.js"></script>
+<script src="/src/shared/utils/helpers.js"></script>
+<script src="/src/pages/admin/dashboard.js"></script>
+</body>
+</html>
