@@ -35,3 +35,7 @@ class TeacherReviewPayload(BaseModel):
     adjusted_grammar: Optional[float] = None
     final_overall_score: Optional[float] = None
     teacher_feedback: str
+
+
+class AssignTeacherPayload(BaseModel):
+    teacher_id: Optional[int] = None

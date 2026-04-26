@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IELTS Speaking AI — New Submission</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/src/shared/styles/base.css">
-    <link rel="stylesheet" href="/src/shared/styles/submission.css">
+    <link rel="stylesheet" href="/src/shared/styles/base.css?v=4">
+    <link rel="stylesheet" href="/src/shared/styles/submission.css?v=4">
 </head>
 
 <body>
@@ -309,6 +309,17 @@
                     </button>
                 </div>
 
+                <!-- Teacher picker -->
+                <div class="sidebar-card" id="teacher-card">
+                    <div class="sidebar-title">
+                        Request a teacher
+                        <span class="teacher-optional">optional</span>
+                    </div>
+                    <select id="teacher-select" class="teacher-select" onchange="selectTeacher(this.value)">
+                        <option value="">None</option>
+                    </select>
+                </div>
+
                 <!-- Part guide -->
                 <div class="sidebar-card" id="part-guide-card">
                     <div class="guide-header">
@@ -399,9 +410,9 @@
         </div>
     </div>
 
-    <script src="/src/shared/utils/auth.js"></script>
-    <script src="/src/shared/utils/helpers.js"></script>
-    <script src="/src/pages/student/submission.js"></script>
+    <script src="/src/shared/utils/auth.js?v=4"></script>
+    <script src="/src/shared/utils/helpers.js?v=4"></script>
+    <script src="/src/pages/student/submission.js?v=4"></script>
 </body>
 
 </html>

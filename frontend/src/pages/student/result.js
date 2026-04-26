@@ -8,7 +8,6 @@
 if (!Auth.requireAuth()) { /* redirects if no token */ }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Populate user info
     const user = await Auth.getCurrentUser();
     if (user) {
         document.getElementById('nav-name').textContent = user.full_name || 'User';
@@ -20,7 +19,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const submissionId = urlParams.get('id');
 
     if (!submissionId) {
-        // No ID — go back to the full list
         window.location.href = '/results.html';
         return;
     }
@@ -57,7 +55,6 @@ async function loadResult(id) {
 
         if (stillEvaluating) {
             document.getElementById('pending-state').classList.remove('hidden');
-            // Poll every 4s until AI finishes
             if (!_pollTimer) {
                 _pollTimer = setInterval(async () => {
                     try {
@@ -118,17 +115,13 @@ function setCircleScore(elementId, score) {
     const s = parseFloat(score) || 0;
     const parent = document.getElementById(elementId);
 
-    // Set text
     parent.querySelector('.percentage').textContent = s.toFixed(1);
 
-    // Set color
     const colorClass = getScoreColorClass(s);
     parent.className = `circle-group ${colorClass}`;
 
-    // Set stroke dasharray (Max score is 9.0, meaning 100 on the graph)
     const percentage = Math.min((s / 9.0) * 100, 100);
     const circle = parent.querySelector('.circle');
-    // Using a slight delay to allow CSS transition to play
     setTimeout(() => {
         circle.setAttribute('stroke-dasharray', `${percentage}, 100`);
     }, 100);
@@ -140,7 +133,6 @@ function setScoreElement(id, score) {
     if (!el) return;
     el.textContent = s.toFixed(1);
 
-    // Set color class on card
     const card = el.closest('.criteria-card');
     if (card) {
         card.classList.remove('score-color-red', 'score-color-yellow', 'score-color-green');
@@ -203,20 +195,16 @@ function renderResult(data) {
 
     document.getElementById('res-transcript').textContent = data.transcript || 'No transcript generated.';
 
-    // Bottom Feedback (Mistakes & Suggestions)
+    // Key Mistakes & Suggestions
     const mistakesList = document.getElementById('res-mistakes');
     const mistakes = ai.key_mistakes || [];
-    if (mistakes.length > 0) {
-        mistakesList.innerHTML = mistakes.map(m => `<li>${m}</li>`).join('');
-    } else {
-        mistakesList.innerHTML = `<li>No major mistakes found.</li>`;
-    }
+    mistakesList.innerHTML = mistakes.length > 0
+        ? mistakes.map(m => `<li>${m}</li>`).join('')
+        : `<li>No major mistakes found.</li>`;
 
     const suggestionsList = document.getElementById('res-suggestions');
     const suggestions = ai.improvement_suggestions || [];
-    if (suggestions.length > 0) {
-        suggestionsList.innerHTML = suggestions.map(m => `<li>${m}</li>`).join('');
-    } else {
-        suggestionsList.innerHTML = `<li>Keep practicing!</li>`;
-    }
+    suggestionsList.innerHTML = suggestions.length > 0
+        ? suggestions.map(m => `<li>${m}</li>`).join('')
+        : `<li>Keep practicing!</li>`;
 }

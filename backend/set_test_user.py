@@ -32,11 +32,11 @@ def seed_users():
             "is_approved": True
         },
         {
-            "full_name": "Teacher Two (Pending)",
+            "full_name": "Teacher Two",
             "email": "teacher2@example.com",
             "password": "password123",
             "role": "teacher",
-            "is_approved": False  # To test pending approval
+            "is_approved": True
         },
         {
             "full_name": "Teacher Three",

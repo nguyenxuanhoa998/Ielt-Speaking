@@ -16,6 +16,7 @@ let mediaRecorder = null;
 let audioChunks   = [];
 let audioBlob     = null;
 let isRecording   = false;
+let selectedTeacherId = null;
 
 /* ── Part data ─────────────────────────────────────────────────── */
 const PARTS = {
@@ -93,7 +94,29 @@ const PARTS = {
   }
   selectPart('part1');
   loadRecentSubmissions();
+  loadTeachers();
 })();
+
+/* ── Teacher picker ────────────────────────────────────────────── */
+async function loadTeachers() {
+  try {
+    const res = await fetch(`${Auth.API_BASE}/v1/teachers`, { headers: Auth.getHeaders() });
+    if (!res.ok) return;
+    const teachers = await res.json();
+
+    const sel = document.getElementById('teacher-select');
+    if (!sel) return;
+
+    sel.innerHTML = `<option value="">None</option>` +
+      teachers.map(t => `<option value="${t.id}">${t.full_name}</option>`).join('');
+  } catch (err) {
+    console.error('Failed to load teachers:', err);
+  }
+}
+
+function selectTeacher(value) {
+  selectedTeacherId = value ? parseInt(value) : null;
+}
 
 /* ── Part selection ────────────────────────────────────────────── */
 function selectPart(part) {
@@ -298,6 +321,10 @@ async function submitEvaluation() {
     formData.append('part', currentPart);
     if (currentQuestion && currentQuestion.text) {
       formData.append('question_text', currentQuestion.text);
+    }
+    const teacherSel = document.getElementById('teacher-select');
+    if (teacherSel && teacherSel.value) {
+      formData.append('teacher_id', teacherSel.value);
     }
 
     const res = await fetch(`${Auth.API_BASE}/v1/submissions`, {

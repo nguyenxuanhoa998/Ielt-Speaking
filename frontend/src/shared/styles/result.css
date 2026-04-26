@@ -241,6 +241,61 @@
 .mistake-list li { border-left: 4px solid var(--score-red); }
 .suggestion-list li { border-left: 4px solid var(--score-green); }
 
+
+/* ── Teacher assignment card ─────────────────────────────────── */
+.teacher-assign-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.ta-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-3);
+}
+
+.ta-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.ta-assigned {
+  font-size: 13px;
+  color: var(--text-3);
+  padding: 2px 10px;
+  border-radius: 20px;
+  background: var(--gray-page);
+  border: 1px solid var(--gray-border);
+}
+
+.ta-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ta-select {
+  padding: 6px 10px;
+  border: 1px solid var(--gray-border);
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text-1);
+  background: var(--white);
+  outline: none;
+  cursor: pointer;
+  min-width: 160px;
+}
+
+.ta-select:focus { border-color: var(--navy-mid); }
+
 /* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .score-overview { grid-template-columns: 1fr; }

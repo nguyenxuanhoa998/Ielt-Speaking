@@ -1,4 +1,5 @@
 import json
+import math
 import os
 import shutil
 import uuid
@@ -12,6 +13,16 @@ from src.models.schemas import TeacherReviewPayload
 from src.services.evaluation_service import evaluate_with_ai, generate_question_text
 from src.services.transcription_service import transcribe_audio
 from src.utils.database import SessionLocal
+
+
+def get_teachers(db: Session):
+    teachers = (
+        db.query(User)
+        .filter(User.role == "teacher", User.is_approved == True)
+        .order_by(User.full_name)
+        .all()
+    )
+    return [{"id": t.id, "full_name": t.full_name} for t in teachers]
 
 
 def generate_question(part: str, db: Session):
@@ -38,6 +49,7 @@ async def create_submission(
     question_id: Optional[int],
     question_text: Optional[str],
     part: Optional[str],
+    teacher_id: Optional[int] = None,
 ):
     if current_user.role != "student":
         raise HTTPException(status_code=403, detail="Only students can submit answers.")
@@ -70,11 +82,18 @@ async def create_submission(
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
+    assigned_teacher_id = None
+    if teacher_id:
+        teacher = db.query(User).filter(User.id == teacher_id, User.role == "teacher", User.is_approved == True).first()
+        if teacher:
+            assigned_teacher_id = teacher.id
+
     submission = Submission(
         user_id=current_user.id,
         question_id=question.id,
         audio_file_path=filepath,
         status="pending",
+        assigned_teacher_id=assigned_teacher_id,
     )
     db.add(submission)
     db.commit()
@@ -134,17 +153,26 @@ def process_submission_background(submission_id: int):
         db.close()
 
 
-def get_submissions(db: Session, current_user: User):
+def get_submissions(db: Session, current_user: User, page: Optional[int] = None, limit: int = 10):
     query = db.query(Submission).options(
         joinedload(Submission.question),
         joinedload(Submission.ai_evaluation),
         joinedload(Submission.teacher_review),
+        joinedload(Submission.user),
+        joinedload(Submission.assigned_teacher),
     )
 
     if current_user.role == "student":
         query = query.filter(Submission.user_id == current_user.id)
 
-    submissions = query.order_by(Submission.submitted_at.desc()).all()
+    query = query.order_by(Submission.submitted_at.desc())
+
+    if page is not None:
+        total = query.count()
+        total_pages = math.ceil(total / limit) if total > 0 else 1
+        submissions = query.offset((page - 1) * limit).limit(limit).all()
+    else:
+        submissions = query.all()
 
     results = []
     for sub in submissions:
@@ -153,6 +181,7 @@ def get_submissions(db: Session, current_user: User):
         overall_score = teacher_score if teacher_score is not None else ai_score
         results.append({
             "id": sub.id,
+            "student_name": sub.user.full_name if sub.user else None,
             "question": sub.question.question_text if sub.question else None,
             "part": sub.question.part if sub.question else None,
             "status": sub.status,
@@ -161,8 +190,12 @@ def get_submissions(db: Session, current_user: User):
             "ai_overall_score": ai_score,
             "teacher_overall_score": teacher_score,
             "audio_file_path": f"/{sub.audio_file_path}",
+            "assigned_teacher_id": sub.assigned_teacher_id,
+            "assigned_teacher_name": sub.assigned_teacher.full_name if sub.assigned_teacher else None,
         })
 
+    if page is not None:
+        return {"items": results, "total": total, "page": page, "limit": limit, "total_pages": total_pages}
     return results
 
 
@@ -173,6 +206,7 @@ def get_submission_detail(submission_id: int, db: Session, current_user: User):
             joinedload(Submission.question),
             joinedload(Submission.ai_evaluation),
             joinedload(Submission.user),
+            joinedload(Submission.assigned_teacher),
         )
         .filter(Submission.id == submission_id)
         .first()
@@ -183,6 +217,7 @@ def get_submission_detail(submission_id: int, db: Session, current_user: User):
 
     if current_user.role == "student" and submission.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to view this submission")
+
 
     return {
         "id": submission.id,
@@ -196,7 +231,33 @@ def get_submission_detail(submission_id: int, db: Session, current_user: User):
         "status": submission.status,
         "submitted_at": submission.submitted_at,
         "ai_evaluation": submission.ai_evaluation.raw_llm_response if submission.ai_evaluation else None,
+        "assigned_teacher_id": submission.assigned_teacher_id,
+        "assigned_teacher_name": submission.assigned_teacher.full_name if submission.assigned_teacher else None,
     }
+
+
+def assign_teacher(submission_id: int, teacher_id: Optional[int], db: Session, current_user: User):
+    submission = db.query(Submission).filter(
+        Submission.id == submission_id,
+        Submission.user_id == current_user.id,
+    ).first()
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+
+    if teacher_id is not None:
+        teacher = db.query(User).filter(
+            User.id == teacher_id, User.role == "teacher", User.is_approved == True
+        ).first()
+        if not teacher:
+            raise HTTPException(status_code=404, detail="Teacher not found")
+        submission.assigned_teacher_id = teacher_id
+        name = teacher.full_name
+    else:
+        submission.assigned_teacher_id = None
+        name = None
+
+    db.commit()
+    return {"assigned_teacher_id": submission.assigned_teacher_id, "assigned_teacher_name": name}
 
 
 def get_dashboard_summary(db: Session, current_user: User):

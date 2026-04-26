@@ -16,7 +16,7 @@ class User(Base):
     is_approved = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=func.now(), nullable=False)
 
-    submissions = relationship("Submission", back_populates="user")
+    submissions = relationship("Submission", back_populates="user", foreign_keys="Submission.user_id")
     reviews_given = relationship("TeacherReview", back_populates="teacher")
 
 
@@ -38,13 +38,15 @@ class Submission(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     question_id = Column(Integer, ForeignKey("questions.id"), nullable=False)
+    assigned_teacher_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     audio_file_path = Column(String(500), nullable=False)
     transcript = Column(Text)
     status = Column(Enum('pending', 'transcribed', 'ai_evaluated', 'completed', name='submission_statuses'), default='pending', nullable=False)
     submitted_at = Column(DateTime, default=func.now(), nullable=False)
 
-    user = relationship("User", back_populates="submissions")
+    user = relationship("User", foreign_keys=[user_id], back_populates="submissions")
     question = relationship("Question", back_populates="submissions")
+    assigned_teacher = relationship("User", foreign_keys=[assigned_teacher_id])
     ai_evaluation = relationship("AiEvaluation", back_populates="submission", uselist=False)
     teacher_review = relationship("TeacherReview", back_populates="submission", uselist=False)
 
